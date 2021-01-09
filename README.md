@@ -8,8 +8,8 @@ Sync logs from S3:
 
 Open GoAccess in terminal:
 
-    bin/terminal
+    bin/terminal brandur.org
 
 Render as HTML:
 
-    bin/html report.html
+    bin/html brandur.org report.html

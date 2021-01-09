@@ -1,3 +1,8 @@
 #!/bin/bash
 
-gunzip -c logs-brandur/brandur.org/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf
+if [ "$#" -ne 1 ]; then
+    echo "usage: $0 <site>"
+    exit 1
+fi
+
+gunzip -c logs-brandur/$1/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf
