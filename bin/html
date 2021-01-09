@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+    echo "usage: bin/html <HTML target file>"
+    exit 1
+fi
+
+gunzip -c logs-brandur/brandur.org/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf -o $1

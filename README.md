@@ -8,8 +8,8 @@ Sync logs from S3:
 
 Open GoAccess in terminal:
 
-    gunzip -c logs-brandur/brandur.org/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf
+    bin/terminal
 
 Render as HTML:
 
-    gunzip -c logs-brandur/brandur.org/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf -o report.html
+    bin/html report.html
