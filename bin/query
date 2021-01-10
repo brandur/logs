@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'open3'
+
+AWS_REGION = "us-west-2"
+S3_RESULT_PATH = "s3://athena-brandur/"
+
+#
+# ---
+#
+
+def run_command(command, abort: true)
+  stdout, stderr, status = Open3.capture3(command)
+  stdout = stdout.strip
+  stderr = stderr.strip
+  success = status.exitstatus == 0
+  if !success && abort
+    abort("command failed: #{command} (stderr: #{stderr})")
+  end
+
+  # puts "stdout: #{stdout}"
+  # puts "stderr: #{stderr}"
+  # puts "status: #{status}"
+
+  [stdout, stderr, success]
+end
+
+def shell_quote_escape(str)
+  # uh, this kind of works, ... for now
+  str.gsub('"', '\"')
+end
+
+#
+# ---
+#
+
+def main(args)
+  abort("usage: bin/query <SQL file>") if ARGV.length != 1
+
+  data = File.read(ARGV[0])
+
+  stdout, stderr, _success = run_command(%{aws athena start-query-execution --query-string "#{shell_quote_escape(data)}" --region #{AWS_REGION} --result-configuration "OutputLocation=#{S3_RESULT_PATH}"})
+
+  data = JSON.parse(stdout)
+  query_execution_id = data["QueryExecutionId"]
+  puts "query execution id: #{query_execution_id}"
+
+  loop do
+    stdout, stderr, success = run_command(%{aws athena get-query-results --query-execution-id #{query_execution_id} --region #{AWS_REGION}}, abort: false)
+    break if success
+
+    case true
+    when stderr.include?("Query has not yet finished")
+      next
+    when stderr.include?("Query did not finish successfully")
+      stdout, stderr, success = run_command(%{aws athena get-query-execution --query-execution-id #{query_execution_id} --region #{AWS_REGION}})
+      abort("query failure: #{stdout}")
+    else
+      abort("checking results failed: #{stderr}")
+    end
+
+    puts "still waiting for query results; sleeping"
+    sleep(1)
+  end
+
+  print "\n"
+
+  data = JSON.parse(stdout)
+  data["ResultSet"]["Rows"].each do |row|
+    row["Data"].each do |field|
+      print "#{field["VarCharValue"]} "
+    end
+    print "\n"
+  end
+end
+
+#
+# ---
+#
+
+main(ARGV)
