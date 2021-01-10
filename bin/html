@@ -5,4 +5,6 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
-gunzip -c logs-brandur/$1/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf -o $2
+NUM_DAYS=30
+
+gunzip -c logs-brandur/$1/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf -o $2 --keep-last $NUM_DAYS
