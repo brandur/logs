@@ -13,7 +13,7 @@ S3_RESULT_PATH = "s3://athena-brandur/"
 def print_table(structured_data)
   col_widths = []
   structured_data.transpose.each do |col_vals|
-    col_widths << col_vals.map { |v| v.length }.max
+    col_widths << col_vals.map { |v| v ? v.length : 0 }.max
   end
 
   print_separator = lambda do
@@ -28,7 +28,7 @@ def print_table(structured_data)
   structured_data.each_with_index do |row, i|
     print " |"
     row.each_with_index do |val, j|
-      print " #{val.ljust(col_widths[j])} |"
+      print " #{(val || "").ljust(col_widths[j])} |"
     end
     print "\n"
     print_separator.call if i == 0
