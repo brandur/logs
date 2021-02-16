@@ -7,4 +7,9 @@ fi
 
 NUM_DAYS=30
 
-gunzip -c logs-brandur/$1/*.gz | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf --keep-last $NUM_DAYS
+files=(logs-brandur/$1/*)
+
+# protects against degenerately large numbers of files in the directory
+last_files=${files[@]: -3000}
+
+gunzip -c $last_files | grep --line-buffered -v -E -f exclude_list.txt | goaccess - -p conf/goaccess.conf --keep-last $NUM_DAYS
