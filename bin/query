@@ -66,21 +66,21 @@ def main(args)
 
   data = File.read(ARGV[0])
 
-  stdout, stderr, _success = run_command(%{aws athena start-query-execution --query-string "#{shell_quote_escape(data)}" --region #{AWS_REGION} --result-configuration "OutputLocation=#{S3_RESULT_PATH}"})
+  stdout, stderr, _success = run_command(%{aws athena start-query-execution --query-string "#{shell_quote_escape(data)}" --region #{AWS_REGION} --result-configuration "OutputLocation=#{S3_RESULT_PATH}" --output json})
 
   data = JSON.parse(stdout)
   query_execution_id = data["QueryExecutionId"]
   puts "query execution id: #{query_execution_id}"
 
   loop do
-    stdout, stderr, success = run_command(%{aws athena get-query-results --query-execution-id #{query_execution_id} --region #{AWS_REGION}}, abort: false)
+    stdout, stderr, success = run_command(%{aws athena get-query-results --query-execution-id #{query_execution_id} --region #{AWS_REGION} --output json}, abort: false)
     break if success
 
     case true
     when stderr.include?("Query has not yet finished")
       next
     when stderr.include?("Query did not finish successfully")
-      stdout, stderr, success = run_command(%{aws athena get-query-execution --query-execution-id #{query_execution_id} --region #{AWS_REGION}})
+      stdout, stderr, success = run_command(%{aws athena get-query-execution --query-execution-id #{query_execution_id} --region #{AWS_REGION} --output json})
       abort("query failure: #{stdout}")
     else
       abort("checking results failed: #{stderr}")
